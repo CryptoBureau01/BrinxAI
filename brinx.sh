@@ -77,53 +77,6 @@ install_dependency(){
 
 
 
-old_user() {
-    print_info "<=========== Running Brinx Relay Node for Existing User ==============>"
-
-    folder_path="/root/brinx"
-    file_path="$folder_path/data-brinx.txt"
-
-    # Prompt the user to enter the new node name
-    read -p "Enter your new Node Name: " new_node_name
-
-    # Check if the brinx folder and data file exist
-    if [ -d "$folder_path" ] && [ -f "$file_path" ]; then
-        old_node_name=$(cat "$file_path")
-        print_info "Node name already exists in data-brinx.txt: $old_node_name"
-
-        # Automatically replace the old node name with the new one without asking
-        print_info "Replacing old node name with the new name: $new_node_name"
-        echo "$new_node_name" > "$file_path"  # Replace node name in file
-
-
-        # Stop the old Docker container without removing the image
-        if sudo docker ps -a --filter "name=$old_node_name" --format '{{.Names}}' | grep -q "$old_node_name"; then
-            print_info "Stopping the old Docker container: $old_node_name..."
-            sudo docker stop "$old_node_name"
-        fi
-
-        # Rename the old Docker container to the new name
-        if sudo docker ps -a --filter "name=$old_node_name" --format '{{.Names}}' | grep -q "$old_node_name"; then
-            print_info "Renaming the old Docker container from $old_node_name to $new_node_name..."
-            sudo docker rename "$old_node_name" "$new_node_name"
-        fi
-
-        # Start the renamed Docker container
-        print_info "Starting the Docker container with the name: $new_node_name"
-        if ! sudo docker start "$new_node_name"; then
-            print_error "Failed to start the Docker container with name $new_node_name."
-            exit 1
-        fi
-
-        print_info "BrinxAI relay node is now running successfully with the name: $new_node_name."
-    else
-        print_error "Brinx folder or data-brinx.txt file not found. Please ensure the setup is correct."
-        exit 1
-    fi
-}
-
-
-
 new_user() {
     print_info "<=========== Setting Up Brinx Relay Node for New User ==============>"
 
@@ -169,7 +122,7 @@ run_relay() {
         print_info "Node name already set: $node_name"
 
         # Replace name for old user call function
-        old_user "$node_name" # Pass the old node name to old_user function
+        print_info "You have already registered this ID address in the node!"
 
     else
         # Call new user function to set a new name
