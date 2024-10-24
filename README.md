@@ -1,13 +1,13 @@
 # BrinxAI-Relay-Node
-BrinxAI-Relay-Node with CoyptoBureau
+**BrinxAI-Relay-Node with CoyptoBureau**
 
 ## System Requirements
 
 | **Hardware** | **Minimum Requirement** |
 |--------------|-------------------------|
-| **CPU**      | 4 Cores                 |
-| **RAM**      | 8 GB                    |
-| **Disk**     | 60 GB                   |
+| **CPU**      | 1 Cores                 |
+| **RAM**      | 1 GB                    |
+| **Disk**     | 1 GB                    |
 | **Bandwidth**| 10 MBit/s               |
 
 
@@ -17,7 +17,7 @@ BrinxAI-Relay-Node with CoyptoBureau
 
 ## Tool Installation Command
 
-To install the necessary tools for managing your UniChain node, run the following command in your terminal:
+To install the necessary tools for managing your BrinxAi-Relay node, run the following command in your terminal:
 
 
 
