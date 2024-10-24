@@ -15,6 +15,11 @@ print_error() {
 
 
 
+
+folder_path="/root/brinx"
+file_path="$folder_path/data-brinx.txt"
+
+
 # Function to install dependencies
 install_dependency(){
 
@@ -72,66 +77,111 @@ install_dependency(){
 
 
 
+old_user() {
+    print_info "<=========== Running Brinx Relay Node for Existing User ==============>"
 
-run_relay() {
-    node_name=$1
+    folder_path="/root/brinx"
+    file_path="$folder_path/data-brinx.txt"
 
-    # Set a default name if no argument is provided
-    node_name=${node_name:-brinxai_relay}
+    # Prompt the user to enter the new node name
+    read -p "Enter your new Node Name: " new_node_name
 
-    # Call function to check or create folder and file
-    manage_brinx_folder "$node_name"
+    # Check if the brinx folder and data file exist
+    if [ -d "$folder_path" ] && [ -f "$file_path" ]; then
+        old_node_name=$(cat "$file_path")
+        print_info "Node name already exists in data-brinx.txt: $old_node_name"
 
-    print_info "<=========== Running Brinx Relay Node ==============>"
-    
-    # Pull and run the BrinxAI relay Docker image with the specified container name
-    print_info "Pulling and running the BrinxAI relay Docker image with the name: $node_name..."
-    
-    if ! sudo docker run -d --name "$node_name" --cap-add=NET_ADMIN -p 1194:1194/udp admier/brinxai_nodes-relay:arm64; then
-        print_error "Failed to run the BrinxAI relay Docker image. Please check Docker setup or image availability."
+        # Automatically replace the old node name with the new one without asking
+        print_info "Replacing old node name with the new name: $new_node_name"
+        echo "$new_node_name" > "$file_path"  # Replace node name in file
+
+
+        # Stop the old Docker container without removing the image
+        if sudo docker ps -a --filter "name=$old_node_name" --format '{{.Names}}' | grep -q "$old_node_name"; then
+            print_info "Stopping the old Docker container: $old_node_name..."
+            sudo docker stop "$old_node_name"
+        fi
+
+        # Rename the old Docker container to the new name
+        if sudo docker ps -a --filter "name=$old_node_name" --format '{{.Names}}' | grep -q "$old_node_name"; then
+            print_info "Renaming the old Docker container from $old_node_name to $new_node_name..."
+            sudo docker rename "$old_node_name" "$new_node_name"
+        fi
+
+        # Start the renamed Docker container
+        print_info "Starting the Docker container with the name: $new_node_name"
+        if ! sudo docker start "$new_node_name"; then
+            print_error "Failed to start the Docker container with name $new_node_name."
+            exit 1
+        fi
+
+        print_info "BrinxAI relay node is now running successfully with the name: $new_node_name."
+    else
+        print_error "Brinx folder or data-brinx.txt file not found. Please ensure the setup is correct."
+        exit 1
+    fi
+}
+
+
+
+new_user() {
+    print_info "<=========== Setting Up Brinx Relay Node for New User ==============>"
+
+    folder_path="/root/brinx"
+    file_path="$folder_path/data-brinx.txt"
+
+    # Prompt the user to enter a new node name
+    read -p "Enter your new Node Name: " new_node_name
+
+    # Check if the brinx folder exists, create if not
+    if [ ! -d "$folder_path" ]; then
+        print_info "Creating new /root/brinx folder..."
+        mkdir -p "$folder_path"
+    fi
+
+    # Save the new node name to the file
+    echo "$new_node_name" > "$file_path"
+    print_info "Node name saved to data-brinx.txt: $new_node_name"
+
+    # Run the Docker container with the new node name
+    print_info "Starting a new Docker container with the name: $new_node_name..."
+    if ! sudo docker run -d --name "$new_node_name" --cap-add=NET_ADMIN -p 1194:1194/udp admier/brinxai_nodes-relay:latest; then
+        print_error "Failed to run the BrinxAI relay Docker container with name $new_node_name. Please check Docker setup or image availability."
         exit 1
     fi
 
-    print_info "BrinxAI relay node is running successfully with the name: $node_name."
+    print_info "BrinxAI relay node is running successfully with the name: $new_node_name."
+}
+
+
+
+
+run_relay() {
+    # Define folder and file paths
+    folder_path="/root/brinx"
+    file_path="$folder_path/data-brinx.txt"
+
+    print_info "<=========== Running Brinx Relay Node ==============>"
+
+    # Check if the node name is already set in data-brinx.txt
+    if [ -f "$file_path" ]; then
+        node_name=$(cat "$file_path") # Read the node name from the file
+        print_info "Node name already set: $node_name"
+
+        # Replace name for old user call function
+        old_user "$node_name" # Pass the old node name to old_user function
+
+    else
+        # Call new user function to set a new name
+        new_user
+        
+        # The new user function will handle saving the name, so no need to do it here
+    fi
 
     # Call the master function or next step if needed
     master
 }
 
-
-
-
-# Function to manage the /root/brinx folder and data-brinx.txt file
-manage_brinx_folder() {
-    node_name=$1
-    folder_path="/root/brinx"
-    file_path="$folder_path/data-brinx.txt"
-
-    # Check if the brinx folder already exists
-    if [ -d "$folder_path" ]; then
-        # If the folder and file already exist, prompt the user
-        if [ -f "$file_path" ]; then
-            echo "The brinx folder and data-brinx.txt file already exist."
-            read -p "Do you want to keep the old data? (y/n): " choice
-
-            if [ "$choice" == "n" ]; then
-                print_info "Deleting old data and creating new file..."
-                rm -rf "$folder_path" # Delete the old folder and file
-                mkdir -p "$folder_path" # Recreate the folder
-                echo "$node_name" > "$file_path" # Save the new node name
-                print_info "New data-brinx.txt file created with node name: $node_name"
-            else
-                print_info "Keeping the old data."
-            fi
-        fi
-    else
-        # If the folder doesn't exist, create it and save the node name
-        print_info "Creating new /root/brinx folder and data-brinx.txt file..."
-        mkdir -p "$folder_path"
-        echo "$node_name" > "$file_path"
-        print_info "Node name saved to data-brinx.txt: $node_name"
-    fi
-}
 
 
 
