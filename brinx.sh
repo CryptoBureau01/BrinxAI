@@ -253,6 +253,7 @@ delete() {
     node_name=$(cat "$file_path")
     print_info "Node name imported from file: $node_name"
 
+
     # Stop the Docker container
     print_info "Stopping Docker container with the name: $node_name..."
     if ! sudo docker stop "$node_name"; then
@@ -260,6 +261,7 @@ delete() {
         exit 1
     fi
 
+    sleep 1
     # Remove the Docker container
     print_info "Removing Docker container with the name: $node_name..."
     if ! sudo docker rm "$node_name"; then
@@ -267,6 +269,8 @@ delete() {
         exit 1
     fi
 
+    sleep 1
+    docker rmi admier/brinxai_nodes-relay
     # Optional: Delete the file (if you want to reset for new user setup)
     # rm -f "$file_path"
 
