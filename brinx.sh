@@ -167,11 +167,35 @@ check_logs() {
 }
 
 
-refresh() {
-    print_info "Please wait ... "
-    sudo docker restart brinxai_relay
-    echo "Node Restart Successfully!"
+restart() {
+    print_info "<=========== Restarting Brinx Relay Node ==============>"
+
+    folder_path="/root/brinx"
+    file_path="$folder_path/data-brinx.txt"
+
+    # Check if the file exists
+    if [ ! -f "$file_path" ]; then
+        print_error "Node name file does not exist at $file_path. Cannot proceed with restarting."
+        exit 1
+    fi
+
+    # Import the node name from the file
+    node_name=$(cat "$file_path")
+    print_info "Node name imported from file: $node_name"
+
+    # Restart the Docker container
+    print_info "Restarting Docker container with the name: $node_name..."
+    if ! sudo docker restart "$node_name"; then
+        print_error "Failed to restart the Docker container named $node_name. Please check if the container exists."
+        exit 1
+    fi
+
+    print_info "Docker container '$node_name' has been successfully restarted."
+
+    # Call the master function or next step if needed
+    master
 }
+
     
 
 
@@ -210,47 +234,72 @@ register_node() {
 }
 
 
+
+
 # Function to stop and remove the Docker container
 delete() {
+    print_info "<=========== Deleting Brinx Relay Node ==============>"
+
     folder_path="/root/brinx"
+    file_path="$folder_path/data-brinx.txt"
 
-    print_info "Please wait ... "
-    sudo docker stop brinxai_relay
+    # Check if the file exists
+    if [ ! -f "$file_path" ]; then
+        print_error "Node name file does not exist at $file_path. Cannot proceed with deletion."
+        exit 1
+    fi
 
-    sleep 1
+    # Import the node name from the file
+    node_name=$(cat "$file_path")
+    print_info "Node name imported from file: $node_name"
 
-    print_info "Please wait ... "
-    sudo docker rm brinxai_relay
+    # Stop the Docker container
+    print_info "Stopping Docker container with the name: $node_name..."
+    if ! sudo docker stop "$node_name"; then
+        print_error "Failed to stop the Docker container named $node_name. Please check if the container exists."
+        exit 1
+    fi
 
-    sleep 1
+    # Remove the Docker container
+    print_info "Removing Docker container with the name: $node_name..."
+    if ! sudo docker rm "$node_name"; then
+        print_error "Failed to remove the Docker container named $node_name. Please check if the container exists."
+        exit 1
+    fi
 
-    print_info "Please wait ... "
+    # Optional: Delete the file (if you want to reset for new user setup)
+    # rm -f "$file_path"
+
+    print_info "Docker container '$node_name' has been successfully stopped and removed."
+
     rm -rf $folder_path
-    
-    echo "Docker container 'brinxai_relay' has been stopped and removed."
+
+    # Call the master function or next step if needed
+    master
 }
+
 
 
 # Function to display menu and prompt user for input
 master() {
-    print_info "==============================="
-    print_info "    BrinxAi-Relay Node Tool Menu    "
-    print_info "==============================="
+    print_info "=================================="
+    print_info "  BrinxAi-Relay Node Tool Menu    "
+    print_info "=================================="
     print_info ""
     print_info "1. Install-Dependency"
     print_info "2. Setup-Node"
     print_info "3. Logs-Checker"
-    print_info "4. Refresh-Node"
+    print_info "4. Restart-Node"
     print_info "5. Register-Your-Relay-Node"
     print_info "6. Delete-Node"
     print_info "7. Exit"
     print_info ""
-    print_info "==============================="
-    print_info " Created By : CryptoBuroMaster "
-    print_info "==============================="
+    print_info "=================================="
+    print_info "  Created By : CryptoBuroMaster   "
+    print_info "=================================="
     print_info ""
     
-    read -p "Enter your choice (1 or 4): " user_choice
+    read -p "Enter your choice (1 or 7): " user_choice
 
     case $user_choice in
         1)
@@ -263,7 +312,7 @@ master() {
             check_logs
             ;;
         4)
-            refresh
+            restart
             ;;
         5)
             register_node
