@@ -137,10 +137,6 @@ run_relay() {
 
 
 
-
-
-
-
 check_logs() {
     print_info "<=========== Checking Logs for Brinx Relay Node ==============>"
     
@@ -169,6 +165,14 @@ check_logs() {
     # Call the master function or next step if needed
     master
 }
+
+
+refresh() {
+    print_info "Please wait ... "
+    sudo docker restart brinxai_relay
+    echo "Node Restart Successfully!"
+}
+    
 
 
 register_node() {
@@ -206,6 +210,26 @@ register_node() {
 }
 
 
+# Function to stop and remove the Docker container
+delete() {
+    folder_path="/root/brinx"
+
+    print_info "Please wait ... "
+    sudo docker stop brinxai_relay
+
+    sleep 1
+
+    print_info "Please wait ... "
+    sudo docker rm brinxai_relay
+
+    sleep 1
+
+    print_info "Please wait ... "
+    rm -rf $folder_path
+    
+    echo "Docker container 'brinxai_relay' has been stopped and removed."
+}
+
 
 # Function to display menu and prompt user for input
 master() {
@@ -216,8 +240,10 @@ master() {
     print_info "1. Install-Dependency"
     print_info "2. Setup-Node"
     print_info "3. Logs-Checker"
-    print_info "4. Register-Your-Relay-Node"
-    print_info "5. Exit"
+    print_info "4. Refresh-Node"
+    print_info "5. Register-Your-Relay-Node"
+    print_info "6. Delete-Node"
+    print_info "7. Exit"
     print_info ""
     print_info "==============================="
     print_info " Created By : CryptoBuroMaster "
@@ -237,9 +263,15 @@ master() {
             check_logs
             ;;
         4)
-            register_node
+            refresh
             ;;
         5)
+            register_node
+            ;;
+        6)
+            delete
+            ;;
+        7)
             exit 0  # Exit the script after breaking the loop
             ;;
         *)
